@@ -1,0 +1,3 @@
+node_modules/
+.env
+memory/session-log.json

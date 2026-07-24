@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Athenaeum</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #16181d;
+    --panel: #1e2128;
+    --panel-border: #2c303a;
+    --text: #e8e6e1;
+    --muted: #8b8f99;
+    --accent: #c9a24b;
+    --chatgpt: #74aa9c;
+    --claude: #d99a63;
+    --gemini: #6b8fd9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Georgia, 'Times New Roman', serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  header {
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    letter-spacing: 0.03em;
+    color: var(--accent);
+  }
+  header .tagline {
+    font-family: sans-serif;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  #memoryToggle {
+    font-family: sans-serif;
+    background: none;
+    border: 1px solid var(--panel-border);
+    color: var(--muted);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+  }
+  #memoryToggle:hover { color: var(--text); border-color: var(--accent); }
+
+  main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+  #table {
+    flex: 1;
+    display: flex;
+    gap: 1px;
+    background: var(--panel-border);
+    overflow: hidden;
+  }
+  .seat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    min-width: 0;
+  }
+  .seat .seat-header {
+    padding: 0.7rem 1rem;
+    font-family: sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .seat[data-seat="chatgpt"] .seat-header { color: var(--chatgpt); }
+  .seat[data-seat="claude"] .seat-header { color: var(--claude); }
+  .seat[data-seat="gemini"] .seat-header { color: var(--gemini); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .seat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+  }
+  .seat-body .placeholder { color: var(--muted); font-style: italic; }
+  .seat-body .error { color: #d97070; font-family: sans-serif; font-size: 0.85rem; }
+  .seat-body .turn + .turn { margin-top: 1.2rem; padding-top: 1.2rem; border-top: 1px dashed var(--panel-border); }
+  .seat-body .turn-label { font-family: sans-serif; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  #memoryPanel {
+    width: 280px;
+    background: var(--panel);
+    border-left: 1px solid var(--panel-border);
+    padding: 1rem;
+    overflow-y: auto;
+    display: none;
+    font-family: sans-serif;
+  }
+  #memoryPanel.open { display: block; }
+  #memoryPanel h2 { font-size: 0.9rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
+  #memoryPanel p { font-size: 0.8rem; color: var(--muted); }
+  #memoryList { list-style: none; padding: 0; margin: 0.5rem 0; }
+  #memoryList li { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid var(--panel-border); font-size: 0.82rem; }
+  #memoryList button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.9rem; }
+  #memoryList button:hover { color: #d97070; }
+  #uploadForm { margin-top: 1rem; }
+  #uploadForm input[type=file] { font-size: 0.75rem; color: var(--muted); width: 100%; }
+  #uploadForm button {
+    margin-top: 0.5rem;
+    width: 100%;
+    padding: 0.5rem;
+    background: var(--accent);
+    color: #1a1a1a;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+
+  footer {
+    border-top: 1px solid var(--panel-border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-end;
+    font-family: sans-serif;
+  }
+  #messageInput {
+    flex: 1;
+    background: #0f1114;
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    padding: 0.7rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    resize: none;
+    font-family: sans-serif;
+  }
+  #messageInput:focus { outline: none; border-color: var(--accent); }
+  .btn {
+    padding: 0.7rem 1.2rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  #askBtn { background: var(--accent); color: #1a1a1a; }
+  #askBtn:disabled { opacity: 0.5; cursor: default; }
+  #discussBtn { background: none; border: 1px solid var(--accent); color: var(--accent); display: none; }
+  #discussBtn:disabled { opacity: 0.5; cursor: default; }
+</style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>The Athenaeum</h1>
+      <div class="tagline">you, ChatGPT, Claude, and Gemini — one table, one question at a time</div>
+    </div>
+    <button id="memoryToggle">Memory</button>
+  </header>
+
+  <main>
+    <div id="table">
+      <div class="seat" data-seat="chatgpt">
+        <div class="seat-header"><span class="dot"></span><span>ChatGPT</span></div>
+        <div class="seat-body" id="body-chatgpt"><span class="placeholder">Waiting for the first question...</span></div>
+      </div>
+      <div class="seat" data-seat="claude">
+        <div class="seat-header"><span class="dot"></span><span>Claude</span></div>
+        <div class="seat-body" id="body-claude"><span class="placeholder">Waiting for the first question...</span></div>
+      </div>
+      <div class="seat" data-seat="gemini">
+        <div class="seat-header"><span class="dot"></span><span>Gemini</span></div>
+        <div class="seat-body" id="body-gemini"><span class="placeholder">Waiting for the first question...</span></div>
+      </div>
+    </div>
+
+    <div id="memoryPanel">
+      <h2>Shared Memory</h2>
+      <p>Drop in .md or .txt handoff notes from your past conversations with each assistant. Everyone at the table reads these before answering.</p>
+      <ul id="memoryList"></ul>
+      <form id="uploadForm">
+        <input type="file" id="fileInput" accept=".md,.txt" required>
+        <button type="submit">Add to memory</button>
+      </form>
+    </div>
+  </main>
+
+  <footer>
+    <textarea id="messageInput" rows="2" placeholder="Bring something to the table..."></textarea>
+    <button id="askBtn" class="btn">Ask the table</button>
+    <button id="discussBtn" class="btn">Have them discuss</button>
+  </footer>
+
+<script>
+const bodies = {
+  chatgpt: document.getElementById('body-chatgpt'),
+  claude: document.getElementById('body-claude'),
+  gemini: document.getElementById('body-gemini'),
+};
+const messageInput = document.getElementById('messageInput');
+const askBtn = document.getElementById('askBtn');
+const discussBtn = document.getElementById('discussBtn');
+const memoryToggle = document.getElementById('memoryToggle');
+const memoryPanel = document.getElementById('memoryPanel');
+const memoryList = document.getElementById('memoryList');
+const uploadForm = document.getElementById('uploadForm');
+const fileInput = document.getElementById('fileInput');
+
+let lastMessage = '';
+let lastAnswers = [];
+
+function renderSeat(seatKey, label, html) {
+  const body = bodies[seatKey];
+  const turn = document.createElement('div');
+  turn.className = 'turn';
+  turn.innerHTML = `<div class="turn-label">${label}</div>${html}`;
+  if (body.querySelector('.placeholder')) body.innerHTML = '';
+  body.appendChild(turn);
+  body.scrollTop = body.scrollHeight;
+}
+
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function renderAnswer(seatKey, answer, label) {
+  if (!answer.available) {
+    renderSeat(seatKey, label, `<span class="error">No API key configured for this seat.</span>`);
+  } else if (answer.error) {
+    renderSeat(seatKey, label, `<span class="error">Error: ${escapeHtml(answer.error)}</span>`);
+  } else {
+    renderSeat(seatKey, label, escapeHtml(answer.text));
+  }
+}
+
+async function askTable() {
+  const message = messageInput.value.trim();
+  if (!message) return;
+  askBtn.disabled = true;
+  discussBtn.style.display = 'none';
+  ['chatgpt', 'claude', 'gemini'].forEach((k) => renderSeat(k, 'You asked', escapeHtml(message)));
+  messageInput.value = '';
+
+  try {
+    const res = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message }),
+    });
+    const data = await res.json();
+    data.answers.forEach((a) => renderAnswer(a.seat, a, a.label));
+    lastMessage = message;
+    lastAnswers = data.answers;
+    if (data.answers.some((a) => a.text)) {
+      discussBtn.style.display = 'inline-block';
+    }
+  } catch (err) {
+    ['chatgpt', 'claude', 'gemini'].forEach((k) =>
+      renderSeat(k, 'Error', `<span class="error">${escapeHtml(String(err))}</span>`));
+  } finally {
+    askBtn.disabled = false;
+  }
+}
+
+async function discussTable() {
+  discussBtn.disabled = true;
+  try {
+    const res = await fetch('/api/discuss', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: lastMessage, answers: lastAnswers }),
+    });
+    const data = await res.json();
+    data.discussion.forEach((a) => renderAnswer(a.seat, a, 'Reacting'));
+  } catch (err) {
+    ['chatgpt', 'claude', 'gemini'].forEach((k) =>
+      renderSeat(k, 'Error', `<span class="error">${escapeHtml(String(err))}</span>`));
+  } finally {
+    discussBtn.disabled = false;
+  }
+}
+
+askBtn.addEventListener('click', askTable);
+discussBtn.addEventListener('click', discussTable);
+messageInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    askTable();
+  }
+});
+
+async function loadMemory() {
+  const res = await fetch('/api/memory');
+  const data = await res.json();
+  memoryList.innerHTML = '';
+  data.files.forEach((f) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${escapeHtml(f.name)}</span><button data-name="${escapeHtml(f.name)}">&times;</button>`;
+    memoryList.appendChild(li);
+  });
+}
+
+memoryList.addEventListener('click', async (e) => {
+  if (e.target.tagName !== 'BUTTON') return;
+  await fetch('/api/memory/' + encodeURIComponent(e.target.dataset.name), { method: 'DELETE' });
+  loadMemory();
+});
+
+memoryToggle.addEventListener('click', () => {
+  memoryPanel.classList.toggle('open');
+  if (memoryPanel.classList.contains('open')) loadMemory();
+});
+
+uploadForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!fileInput.files[0]) return;
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+  await fetch('/api/memory/upload', { method: 'POST', body: formData });
+  fileInput.value = '';
+  loadMemory();
+});
+</script>
+</body>
+</html>
