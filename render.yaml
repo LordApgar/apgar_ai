@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: the-athenaeum
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o
+      - key: ANTHROPIC_MODEL
+        value: claude-opus-4-8
+      - key: GOOGLE_MODEL
+        value: gemini-2.0-flash

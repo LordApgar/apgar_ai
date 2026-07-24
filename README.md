@@ -6,7 +6,30 @@ other's answers. A shared memory folder holds handoff notes imported from your
 past conversations with each assistant, so every seat at the table can draw on
 the same background about you.
 
-## Setup
+## Deploy online (no terminal required)
+
+This repo includes a `render.yaml`, so [Render](https://render.com) can set
+almost everything up for you:
+
+1. Sign up at [render.com](https://render.com) (free) and connect your GitHub
+   account.
+2. Click **New** → **Blueprint**, and pick this repository / branch.
+3. Render reads `render.yaml` and asks you to fill in three fields —
+   `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`. Paste in whichever
+   keys you have; leave the others blank.
+4. Click **Apply**. Render builds and starts the app, then gives you a URL
+   like `https://the-athenaeum.onrender.com` — open it in a browser and you're
+   in the room.
+
+Note: on Render's free tier the service spins down after inactivity, so the
+first request after a while asleep can take 30–60 seconds to wake back up.
+The free tier's disk is also not persistent across restarts, so anything
+uploaded to the Memory panel may disappear when the service restarts — fine
+for trying it out, but for memory that sticks around long-term you'd want a
+paid plan with a persistent disk, or to keep the `memory/imports/` files in
+the repo itself.
+
+## Run it on your own computer instead
 
 ```bash
 npm install
